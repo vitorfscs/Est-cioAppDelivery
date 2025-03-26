@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Dimensions, Image } from 'react-native';  // Certifique-se de importar o 'Image'
-import Carousel from 'react-native-snap-carousel';  // Biblioteca para carrossel
+import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList } from 'react-native';
+import Constants from 'expo-constants';
+
+const statusBarHeight = Constants.statusBarHeight;
 
 export default function App() {
   const items = [
@@ -16,55 +18,112 @@ export default function App() {
     { id: '9', image: require('./assets/fotos/sushi.jpg'), name: 'Sushi' },
   ];
 
-  // Pegando a largura da tela
-  const windowWidth = Dimensions.get('window').width;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const itemsPerPage = 3;
+
+  const currentItems = items.slice(currentIndex, currentIndex + itemsPerPage);
+
+  const nextItems = () => {
+    if (currentIndex + itemsPerPage < items.length) {
+      setCurrentIndex(currentIndex + itemsPerPage);
+    }
+  };
+
+  const prevItems = () => {
+    if (currentIndex - itemsPerPage >= 0) {
+      setCurrentIndex(currentIndex - itemsPerPage);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>BigFood Delivery</Text>
-      <StatusBar style="auto" />
+    <View style={styles.mainContainer}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>BigFood Delivery</Text>
+      </View>
 
-      {/* Carrossel de imagens */}
-      <Carousel
-        data={items}
-        sliderWidth={windowWidth}
-        itemWidth={windowWidth / 2.5} // A largura do item
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Image source={item.image} style={[styles.image, { width: windowWidth / 2.5 }]} />
-            <Text style={styles.text}>{item.name}</Text>
+      {/* Main Content */}
+      <View style={styles.container}>
+        <StatusBar style="auto" />
+
+        {/* FlatList for Horizontal Scrolling */}
+        <FlatList
+          horizontal
+          data={currentItems}
+          renderItem={({ item }) => (
+            <View key={item.id} style={styles.item}>
+              <Image source={item.image} style={styles.image} />
+              <Text style={styles.text}>{item.name}</Text>
+            </View>
+          )}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+        />
+
+        {/* Navigation (Below Images) */}
+        <View style={styles.navigationContainer}>
+          <Text style={styles.instructionText}>Aperte para mais opções</Text>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigation}>
+            <TouchableOpacity onPress={prevItems} disabled={currentIndex === 0}>
+              <Text style={[styles.arrow, currentIndex === 0 && styles.disabled]}>{"<"}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={nextItems} disabled={currentIndex + itemsPerPage >= items.length}>
+              <Text style={[styles.arrow, currentIndex + itemsPerPage >= items.length && styles.disabled]}>{">"}</Text>
+            </TouchableOpacity>
           </View>
-        )}
-        loop={true} // Habilita a rotação contínua
-        autoplay={true} // Ativa o autoplay
-        autoplayInterval={3000} // Intervalo do autoplay em milissegundos
-      />
+        </View>
+
+        {/* Promo Section with Local Image */}
+        <View style={styles.promocaoContainer}>
+          <Image
+            source={require('./assets/fotos/promocao.jpg')} // Caminho para a imagem na pasta
+            style={styles.promocaoImage}
+          />
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+
+  container: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: statusBarHeight,
   },
 
   header: {
+    backgroundColor: '#019b1e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 80,
+    paddingTop: 20,
+    marginBottom: 10,
+  },
+
+  headerText: {
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
 
   item: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 5, // Espaçamento entre os itens
+    marginHorizontal: 10,
   },
 
   image: {
-    height: 150, // Ajustando altura das imagens
+    height: 100,
+    width: 100,
     borderRadius: 10,
   },
 
@@ -72,5 +131,47 @@ const styles = StyleSheet.create({
     color: 'black',
     marginTop: 8,
     fontSize: 16,
-  }
+  },
+
+  navigationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10, // Espaço entre as imagens e as setas
+  },
+
+  instructionText: {
+    fontSize: 16,
+    marginBottom: 5, // Pequeno espaço entre o texto de instrução e as setas
+    color: '#000',
+  },
+
+  navigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  arrow: {
+    fontSize: 40,
+    color: '#000',
+    marginHorizontal: 20,
+    padding: 10,
+  },
+
+  disabled: {
+    color: '#d3d3d3',
+  },
+
+  promocaoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10, // Espaço antes da imagem promocional
+    padding: 10,
+  },
+
+  promocaoImage: {
+    height: 200, // Ajustado para que a imagem tenha altura suficiente
+    width: 350, // A imagem ocupará toda a largura da tela
+    borderRadius: 30
+  },
 });
